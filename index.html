@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="description" content="A mobile-first beginner workout plan with offline support, saved notes, and persistent progress tracking.">
+<meta name="theme-color" content="#0f0f12">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FORGE">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<title>FORGE - Beginner Muscle Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f12;
+    --surface: #1a1a22;
+    --surface2: #22222e;
+    --card: #1e1e28;
+    --accent: #e8ff4d;
+    --accent2: #4dffa6;
+    --accent3: #ff6b4d;
+    --text: #f0f0f0;
+    --muted: #888;
+    --border: #2e2e3e;
+    --radius: 14px;
+    --font-head: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
+
+  /* NAV TABS */
+  .sticky-nav { position: sticky; top: 0; z-index: 100; background: var(--bg); border-bottom: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; scroll-behavior: smooth; }
+  .sticky-nav::-webkit-scrollbar { display: none; }
+  .nav-tabs { display: flex; gap: 0; min-width: max-content; padding: 0 8px; scroll-snap-type: x proximity; }
+  .nav-tab { padding: 13px 18px; font-family: var(--font-body); font-size: 13px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); background: none; border: none; cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.2s; scroll-snap-align: center; }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .nav-tab:hover { color: var(--text); }
+
+  /* PAGES */
+  .page { display: none; padding: 0 0 calc(92px + env(safe-area-inset-bottom)); }
+  .page.active { display: block; }
+
+  /* HERO */
+  .hero { background: linear-gradient(160deg, #1a1a22 0%, #0f0f12 60%); padding: 40px 20px 32px; position: relative; overflow: hidden; }
+  .hero::before { content: 'FORGE'; position: absolute; right: -10px; top: 10px; font-family: var(--font-head); font-size: 120px; color: rgba(232,255,77,0.04); line-height: 1; pointer-events: none; }
+  .hero-badge { display: inline-block; background: var(--accent); color: #0f0f12; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; margin-bottom: 14px; }
+  .hero h1 { font-family: var(--font-head); font-size: 52px; line-height: 1; color: var(--text); margin-bottom: 10px; letter-spacing: 0.02em; }
+  .hero h1 span { color: var(--accent); }
+  .hero p { color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 320px; }
+
+  /* SECTION */
+  .section { padding: 20px; }
+  .section-title { font-family: var(--font-head); font-size: 28px; letter-spacing: 0.04em; color: var(--accent); margin-bottom: 16px; }
+  .section-title small { font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
+
+  /* INFO CARDS */
+  .info-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; }
+  .info-card h3 { font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .info-card p, .info-card li { font-size: 14px; color: #ccc; line-height: 1.65; }
+  .info-card ul { padding-left: 18px; }
+  .info-card li { margin-bottom: 5px; }
+
+  /* SCHEDULE GRID */
+  .schedule-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 16px; }
+  .sched-day { background: var(--surface2); border-radius: 10px; padding: 10px 4px; text-align: center; }
+  .sched-day.active { background: var(--accent); }
+  .sched-day.active .day-label, .sched-day.active .day-type { color: #0f0f12; }
+  .sched-day.optional { background: rgba(77,255,166,0.12); border: 1px solid var(--accent2); }
+  .sched-day.optional .day-type { color: var(--accent2); }
+  .day-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); display: block; margin-bottom: 4px; }
+  .sched-day.active .day-label { color: #0a0a0f; }
+  .day-type { font-size: 9px; font-weight: 600; color: var(--muted); display: block; }
+
+  /* WORKOUT DAY ACCORDION */
+  .day-header { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 8px; transition: background 0.2s; }
+  .day-header:hover { background: var(--surface2); }
+  .day-header.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; background: var(--surface2); }
+  .day-title-wrap { display: flex; align-items: center; gap: 12px; }
+  .day-num { font-family: var(--font-head); font-size: 36px; color: var(--accent); line-height: 1; }
+  .day-name { font-size: 16px; font-weight: 700; color: var(--text); }
+  .day-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .chevron { font-size: 20px; color: var(--muted); transition: transform 0.3s; }
+  .day-header.open .chevron { transform: rotate(180deg); }
+  .day-content { display: none; background: var(--surface2); border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); padding: 0 16px 16px; margin-bottom: 20px; }
+  .day-content.open { display: block; }
+
+  /* EXERCISE CARD */
+  .exercise-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-top: 14px; overflow: hidden; transition: border-color 0.2s; }
+  .exercise-card.done { border-color: var(--accent2); opacity: 0.6; }
+  .exercise-card.done .ex-header { background: rgba(77,255,166,0.06); }
+  .ex-header { display: flex; align-items: center; gap: 12px; padding: 14px 14px 10px; }
+  .ex-checkbox { width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--border); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; font-size: 14px; }
+  .ex-checkbox.checked { background: var(--accent2); border-color: var(--accent2); color: #0f0f12; }
+  .ex-name { font-size: 15px; font-weight: 700; color: var(--text); flex: 1; line-height: 1.2; }
+  .ex-target { font-size: 11px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; background: rgba(232,255,77,0.1); padding: 2px 8px; border-radius: 20px; }
+  .ex-media { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #111; }
+  .ex-video-link { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: rgba(255,107,77,0.1); border-top: 1px solid var(--border); text-decoration: none; color: var(--accent3); font-size: 13px; font-weight: 600; }
+  .ex-video-link:hover { background: rgba(255,107,77,0.2); }
+  .play-icon { width: 28px; height: 28px; background: var(--accent3); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; }
+  .ex-body { padding: 14px; }
+  .ex-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .stat-box { background: var(--surface); border-radius: 10px; padding: 10px 8px; text-align: center; }
+  .stat-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); display: block; margin-bottom: 4px; }
+  .stat-value { font-family: var(--font-head); font-size: 20px; color: var(--text); letter-spacing: 0.04em; display: block; }
+  .stat-unit { font-size: 9px; color: var(--muted); }
+  .ex-cues { background: var(--surface); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+  .ex-cues h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent2); margin-bottom: 8px; }
+  .ex-cues ul { padding-left: 16px; }
+  .ex-cues li { font-size: 13px; color: #ccc; line-height: 1.55; margin-bottom: 4px; }
+  .sub-note { font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px; }
+  .sub-note strong { color: var(--accent3); }
+
+  /* WARM-UP PILLS */
+  .warmup-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 7px 14px; font-size: 13px; color: var(--text); }
+  .pill strong { color: var(--accent); }
+
+  /* PROGRESSION TABLE */
+  .prog-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .prog-table th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  .prog-table td { font-size: 13px; color: #ccc; padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .prog-table tr:last-child td { border-bottom: none; }
+  .week-badge { display: inline-block; background: var(--accent); color: #0f0f12; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; }
+
+  /* NUTRITION TRACKER */
+  .macro-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+  .macro-box { background: var(--surface2); border-radius: 12px; padding: 14px 10px; text-align: center; }
+  .macro-val { font-family: var(--font-head); font-size: 30px; color: var(--accent); letter-spacing: 0.04em; }
+  .macro-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* BUTTONS */
+  .btn { display: block; width: 100%; padding: 16px; border-radius: var(--radius); font-family: var(--font-body); font-size: 15px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; border: none; transition: all 0.2s; margin-bottom: 10px; }
+  .btn-primary { background: var(--accent); color: #0f0f12; }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-ghost { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); }
+  .btn-success { background: var(--accent2); color: #0f0f12; }
+
+  /* OPTIONAL DAY */
+  .optional-badge { display: inline-block; background: rgba(77,255,166,0.15); color: var(--accent2); border: 1px solid var(--accent2); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; margin-bottom: 12px; }
+
+  /* SAFETY BOX */
+  .safety-box { background: rgba(255,107,77,0.08); border: 1px solid rgba(255,107,77,0.3); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .safety-box h3 { color: var(--accent3); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+  .safety-box li { font-size: 13px; color: #ccc; line-height: 1.6; margin-bottom: 4px; }
+  .safety-box ul { padding-left: 16px; }
+
+  /* COMPLETE BANNER */
+  .complete-banner { background: var(--accent2); color: #0f0f12; border-radius: var(--radius); padding: 18px; text-align: center; margin: 16px 0; display: none; }
+  .complete-banner.show { display: block; }
+  .complete-banner h3 { font-family: var(--font-head); font-size: 28px; letter-spacing: 0.04em; }
+  .complete-banner p { font-size: 13px; font-weight: 600; margin-top: 4px; }
+
+  @media (min-width: 600px) {
+    .hero h1 { font-size: 72px; }
+    .ex-stats { grid-template-columns: repeat(4, 1fr); }
+    .page { max-width: 520px; margin: 0 auto; }
+  }
+
+  /* UPGRADED UTILITY UI */
+  .utility-bar { display:flex; gap:10px; flex-wrap:wrap; margin: 0 20px 16px; }
+  .utility-chip { background: var(--surface); border:1px solid var(--border); color: var(--text); border-radius: 999px; padding:10px 14px; font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; }
+  .utility-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .day-progress { background: var(--surface); border:1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; }
+  .day-progress-top { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; }
+  .day-progress-label { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:700; }
+  .day-progress-value { font-size:13px; font-weight:700; color:var(--text); }
+  .day-progress-bar { height:10px; border-radius:999px; background: var(--surface2); overflow:hidden; }
+  .day-progress-fill { height:100%; width:0%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .25s ease; }
+  .exercise-tools { display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; margin-top: 12px; }
+  .input-box { background: var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px; }
+  .input-box label { display:block; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:700; margin-bottom:6px; }
+  .input-box input, .input-box textarea, .input-box select { width:100%; background:#111218; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:10px 10px; font-family:var(--font-body); font-size:13px; }
+  .input-box textarea { min-height: 72px; resize: vertical; }
+  .full-span { grid-column: 1 / -1; }
+  .rest-row { display:flex; gap:8px; flex-wrap:wrap; margin-top: 12px; }
+  .rest-btn { background: rgba(77,255,166,0.12); border:1px solid var(--accent2); color: var(--accent2); border-radius:999px; padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer; }
+  .mini-note { font-size:12px; color: var(--muted); margin-top: 10px; }
+  .timer-dock { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 999; background: rgba(15,15,18,0.96); border:1px solid var(--border); border-radius: 16px; padding: 14px; backdrop-filter: blur(10px); box-shadow: 0 12px 30px rgba(0,0,0,.35); display:none; }
+  .timer-dock.show { display:block; }
+  .timer-top { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
+  .timer-title { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:700; }
+  .timer-count { font-family: var(--font-head); font-size:42px; line-height:1; color: var(--accent); letter-spacing: .05em; }
+  .timer-actions { display:flex; gap:8px; }
+  .timer-btn { flex:1; border:none; border-radius:10px; padding:12px; font-size:13px; font-weight:700; cursor:pointer; }
+  .timer-btn.primary { background: var(--accent); color:#0f0f12; }
+  .timer-btn.ghost { background: var(--surface); color: var(--text); border:1px solid var(--border); }
+  .sticky-quicknav { position: sticky; top: 49px; z-index: 90; background: linear-gradient(180deg, rgba(15,15,18,1) 0%, rgba(15,15,18,.94) 100%); padding: 10px 20px 0; }
+  .quicknav-row { display:flex; gap:8px; overflow-x:auto; padding-bottom: 8px; scrollbar-width:none; }
+  .quicknav-row::-webkit-scrollbar { display:none; }
+  .quicknav-btn { white-space:nowrap; background: var(--surface); color: var(--muted); border:1px solid var(--border); border-radius:999px; padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer; }
+  .quicknav-btn.active { color:#0f0f12; background: var(--accent); border-color: var(--accent); }
+  .stat-box .load-entry { display:block; font-size:11px; color: var(--accent2); margin-top:3px; font-weight:700; }
+  .save-badge { display:inline-block; margin-left:8px; color: var(--accent2); font-size:11px; font-weight:700; }
+  .no-js { background: rgba(255,107,77,.12); border:1px solid rgba(255,107,77,.35); color: #ffd6cd; padding: 14px 16px; margin: 14px 20px 0; border-radius: 12px; font-size: 13px; line-height: 1.5; }
+  @media (min-width: 600px) {
+    .sticky-quicknav { top: 50px; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="sticky-nav">
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('overview', this)">Overview</button>
+    <button class="nav-tab" onclick="showPage('schedule', this)">Schedule</button>
+    <button class="nav-tab" onclick="showPage('day1', this)">Day 1</button>
+    <button class="nav-tab" onclick="showPage('day2', this)">Day 2</button>
+    <button class="nav-tab" onclick="showPage('day3', this)">Day 3</button>
+    <button class="nav-tab" onclick="showPage('day4', this)">Day 4+</button>
+    <button class="nav-tab" onclick="showPage('progress', this)">Progress</button>
+    <button class="nav-tab" onclick="showPage('fuel', this)">Fuel</button>
+  </div>
+<noscript><div class="no-js">This workout plan uses JavaScript for tabs, saved progress, timers, and exercise tracking. Open it in Safari or any normal browser — not a file preview that blocks scripts.</div></noscript>
+<div class="utility-bar">
+  <button class="utility-chip" onclick="exportWorkoutData()">Export Progress</button>
+  <button class="utility-chip" onclick="importWorkoutData()">Import Progress</button>
+  <button class="utility-chip" onclick="clearAllWorkoutData()">Reset All Data</button>
+</div>
+
+<!-- ====== OVERVIEW ====== -->
+<div class="page active" id="page-overview">
+  <div class="hero">
+    <div class="hero-badge">8-Week Beginner Program</div>
+    <h1>FORGE <span>YOUR</span> BODY</h1>
+    <p>A science-backed, full-body muscle plan built for men over 40. 3–4 days a week. 50–65 minutes per session.</p>
+  </div>
+
+  <div class="section">
+    <div class="info-card">
+      <h3>Who This Is For</h3>
+      <ul>
+        <li>Men aged 35–55, beginner or returning to training</li>
+        <li>Wants to build muscle and improve overall shape</li>
+        <li>Can commit to 3–4 gym sessions per week</li>
+        <li>No injury that prevents basic compound movements</li>
+        <li>Wants a plan simple enough to follow alone in a gym</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>How to Use This Plan</h3>
+      <ul>
+        <li>Follow the Weekly Schedule tab for your training days</li>
+        <li>Tap a workout day to expand it; check off exercises as you go</li>
+        <li>Always complete the warm-up before lifting</li>
+        <li>Rest at least 1 full day between sessions</li>
+        <li>Follow the Progression rules in the Progress tab each week</li>
+        <li>Tap any video link to see how the exercise is performed</li>
+        <li>Use substitutions listed when a machine is taken</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>🔥 Warm-Up Protocol (Every Day)</h3>
+      <p style="margin-bottom:10px;">Complete before any workout. Takes 8–10 minutes.</p>
+      <div class="warmup-pills">
+        <div class="pill"><strong>5 min</strong> Light cardio (bike/row/walk)</div>
+        <div class="pill"><strong>10x</strong> Hip circles each side</div>
+        <div class="pill"><strong>10x</strong> Leg swings</div>
+        <div class="pill"><strong>10x</strong> Arm circles</div>
+        <div class="pill"><strong>10x</strong> Bodyweight squat</div>
+        <div class="pill"><strong>10x</strong> Cat-cow stretch</div>
+        <div class="pill"><strong>5x</strong> Inchworm</div>
+      </div>
+    </div>
+
+    <div class="safety-box">
+      <h3>⚠️ Safety Rules — Read First</h3>
+      <ul>
+        <li>Always warm up — never skip it at 40+</li>
+        <li>Use weights you can control for the full rep range before adding weight</li>
+        <li>Stop if you feel sharp pain, not just muscle burn</li>
+        <li>Progress slowly — the goal of Week 1 is to learn form, not go heavy</li>
+        <li>If a machine is taken, use the substitution listed on the exercise card</li>
+        <li>Sleep 7–8 hours — recovery is when you grow, not in the gym</li>
+        <li>Check with your doctor before starting if you have any pre-existing conditions</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SCHEDULE ====== -->
+<div class="page" id="page-schedule">
+  <div class="section">
+    <div class="section-title">
+      <small>Your Weekly Plan</small>
+      SCHEDULE
+    </div>
+
+    <div class="info-card" style="margin-bottom:20px;">
+      <h3>Recommended Weekly Layout</h3>
+      <div class="schedule-grid" style="margin-top:12px;">
+        <div class="sched-day active"><span class="day-label">Mon</span><span class="day-type">Day 1</span></div>
+        <div class="sched-day"><span class="day-label">Tue</span><span class="day-type">Rest</span></div>
+        <div class="sched-day active"><span class="day-label">Wed</span><span class="day-type">Day 2</span></div>
+        <div class="sched-day"><span class="day-label">Thu</span><span class="day-type">Rest</span></div>
+        <div class="sched-day active"><span class="day-label">Fri</span><span class="day-type">Day 3</span></div>
+        <div class="sched-day optional"><span class="day-label">Sat</span><span class="day-type">Day 4?</span></div>
+        <div class="sched-day"><span class="day-label">Sun</span><span class="day-type">Rest</span></div>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-top:10px;">Day 4 (Saturday) is fully optional. Skip it for 3 days/week or add it for accelerated results. Day 4 is arms + shoulders + light conditioning.</p>
+    </div>
+
+    <div class="info-card">
+      <h3>What Each Day Trains</h3>
+      <ul>
+        <li><strong style="color:var(--accent);">Day 1 — Full Body A:</strong> Squat pattern, push, pull, hinge, core</li>
+        <li><strong style="color:var(--accent);">Day 2 — Full Body B:</strong> Hip hinge focus, horizontal push/pull, core</li>
+        <li><strong style="color:var(--accent);">Day 3 — Full Body C:</strong> Single-leg, vertical pull, shoulder, arms, core</li>
+        <li><strong style="color:var(--accent2);">Day 4 (Optional):</strong> Arms, shoulders, light cardio, mobility</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>Rest Day Activities</h3>
+      <ul>
+        <li>20–30 min walk — highly recommended</li>
+        <li>Light stretching or yoga (10–15 min)</li>
+        <li>Nothing intense — let muscles repair and grow</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ====== DAY 1 ====== -->
+<div class="page" id="page-day1">
+  <div class="section">
+    <div class="section-title">
+      <small>Monday / Session A</small>
+      DAY 1 — FULL BODY A
+    </div>
+    <div class="sticky-quicknav"><div class="quicknav-row" id="quicknav-day1"></div></div>
+    <div class="day-progress" id="progress-day1">
+      <div class="day-progress-top">
+        <div class="day-progress-label">Session progress</div>
+        <div class="day-progress-value"><span id="progress-text-day1">0 / 0</span><span class="save-badge" id="save-badge-day1"></span></div>
+      </div>
+      <div class="day-progress-bar"><div class="day-progress-fill" id="progress-fill-day1"></div></div>
+    </div>
+<p style="color:var(--muted);font-size:13px;margin-bottom:20px;">Duration: 50–65 min · Focus: Squat pattern, chest press, lat pulldown, core</p>
+    <button class="btn btn-ghost" id="reset-day1" onclick="resetDay('day1')">↺ Reset Checkboxes</button>
+    <div class="complete-banner" id="banner-day1"><h3>💪 Session Complete!</h3><p>Rest, eat, and come back stronger.</p></div>
+
+    <!-- GOBLET SQUAT -->
+    <div class="exercise-card" id="ex-d1-1">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d1-1','day1')"></div>
+        <div class="ex-name">Goblet Squat</div>
+        <div class="ex-target">Quads · Glutes</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=MeIiIdhvXT4" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch Goblet Squat Tutorial (Jeff Nippard)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">12</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">90<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Hold dumbbell vertically at chest height with both hands</li>
+            <li>Feet shoulder-width, toes turned out 15–20°</li>
+            <li>Push knees out in line with toes as you descend</li>
+            <li>Keep chest tall; don't let torso collapse forward</li>
+            <li>Squat until thighs are parallel or slightly below</li>
+            <li>Drive through heels on the way up — don't rush</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>No dumbbell rack?</strong> Use leg press machine or bodyweight squat with 3 second descent.</p>
+      </div>
+    </div>
+
+    <!-- DUMBBELL BENCH PRESS -->
+    <div class="exercise-card" id="ex-d1-2">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d1-2','day1')"></div>
+        <div class="ex-name">Dumbbell Bench Press</div>
+        <div class="ex-target">Chest · Triceps · Shoulders</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=VmB1G1K7v94" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch DB Bench Press Tutorial (Renaissance Periodization)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">10</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">90<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Lie flat, feet flat on floor, slight natural arch in lower back</li>
+            <li>Pinch shoulder blades down and back into the bench</li>
+            <li>Lower dumbbells to chest level — elbows at 45–60° from torso</li>
+            <li>Press up and slightly inward; don't flare elbows wide</li>
+            <li>Control the descent — 2 seconds down, 1 second up</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>Bench taken?</strong> Use machine chest press or cable chest press.</p>
+      </div>
+    </div>
+
+    <!-- LAT PULLDOWN -->
+    <div class="exercise-card" id="ex-d1-3">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d1-3','day1')"></div>
+        <div class="ex-name">Lat Pulldown</div>
+        <div class="ex-target">Lats · Biceps · Upper Back</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=CAwf7n6Luuc" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch Lat Pulldown Tutorial (Athlean-X)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">12</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">90<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Grip bar slightly wider than shoulder-width, overhand</li>
+            <li>Lean back slightly — about 15–20° — keep chest up</li>
+            <li>Pull bar to upper chest, driving elbows down and back</li>
+            <li>Squeeze lats at bottom for 1 second</li>
+            <li>Control the weight back up — feel the stretch at top</li>
+            <li>Don't swing or use momentum</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>Machine taken?</strong> Use resistance band pulldown anchored overhead or assisted pull-up machine.</p>
+      </div>
+    </div>
+
+    <!-- LEG CURL -->
+    <div class="exercise-card" id="ex-d1-4">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d1-4','day1')"></div>
+        <div class="ex-name">Seated / Lying Leg Curl</div>
+        <div class="ex-target">Hamstrings</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=1Tq3QdYUuHs" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch Leg Curl Tutorial (Jeff Nippard)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">12</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">90<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Adjust pad to sit just above ankles</li>
+            <li>Curl weight with controlled pace — 2 seconds up</li>
+            <li>Squeeze hamstrings at peak contraction</li>
+            <li>Lower slowly — 3 seconds — resist the weight down</li>
+            <li>Don't let hips lift off the seat to assist</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>Machine taken?</strong> Dumbbell lying leg curl or Nordic curl on a bench.</p>
+      </div>
+    </div>
+
+    <!-- PLANK -->
+    <div class="exercise-card" id="ex-d1-5">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d1-5','day1')"></div>
+        <div class="ex-name">Plank Hold</div>
+        <div class="ex-target">Core · Abs · Lower Back</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=ASdvN_XEl_c" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch Perfect Plank Form (Athlean-X)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Hold</span><span class="stat-value">30<span class="stat-unit">s</span></span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">60<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Forearms on ground, elbows under shoulders</li>
+            <li>Body forms a straight line — head to heels</li>
+            <li>Squeeze abs, glutes, and quads simultaneously</li>
+            <li>Don't let hips rise or sag — stay rigid</li>
+            <li>Breathe — don't hold breath</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>Too hard?</strong> Start with knees down until you can hold 30 seconds with perfect form.</p>
+      </div>
+    </div>
+
+    <button class="btn btn-success" onclick="completeWorkout('day1')">✓ Mark Day 1 Complete</button>
+  </div>
+</div>
+
+<!-- ====== DAY 2 ====== -->
+<div class="page" id="page-day2">
+  <div class="section">
+    <div class="section-title">
+      <small>Wednesday / Session B</small>
+      DAY 2 — FULL BODY B
+    </div>
+    <div class="sticky-quicknav"><div class="quicknav-row" id="quicknav-day2"></div></div>
+    <div class="day-progress" id="progress-day2">
+      <div class="day-progress-top">
+        <div class="day-progress-label">Session progress</div>
+        <div class="day-progress-value"><span id="progress-text-day2">0 / 0</span><span class="save-badge" id="save-badge-day2"></span></div>
+      </div>
+      <div class="day-progress-bar"><div class="day-progress-fill" id="progress-fill-day2"></div></div>
+    </div>
+<p style="color:var(--muted);font-size:13px;margin-bottom:20px;">Duration: 50–65 min · Focus: Hip hinge, seated row, shoulder press, split squat</p>
+    <button class="btn btn-ghost" onclick="resetDay('day2')">↺ Reset Checkboxes</button>
+    <div class="complete-banner" id="banner-day2"><h3>💪 Session Complete!</h3><p>Rest, eat, and come back stronger.</p></div>
+
+    <!-- ROMANIAN DEADLIFT -->
+    <div class="exercise-card" id="ex-d2-1">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d2-1','day2')"></div>
+        <div class="ex-name">Romanian Deadlift (Dumbbell)</div>
+        <div class="ex-target">Hamstrings · Glutes · Lower Back</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=jEy_czb3RKA" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch DB Romanian Deadlift Tutorial (Jeff Nippard)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">10</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">90<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Hold dumbbells at hip level, slight bend in knees (soft, not squatting)</li>
+            <li>Hinge at hips — push hips back, not down</li>
+            <li>Lower weights along the front of your legs — feel hamstrings stretch</li>
+            <li>Keep back flat and chest up throughout — no rounding</li>
+            <li>Drive hips forward to stand — squeeze glutes at top</li>
+            <li>Lower to mid-shin or until your back starts to round — whichever comes first</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>No dumbbells?</strong> Cable pull-through or machine hip extension.</p>
+      </div>
+    </div>
+
+    <!-- SEATED CABLE ROW -->
+    <div class="exercise-card" id="ex-d2-2">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d2-2','day2')"></div>
+        <div class="ex-name">Seated Cable Row</div>
+        <div class="ex-target">Mid Back · Lats · Biceps</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=GZbfZ033f74" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch Seated Cable Row Tutorial (Scott Herman)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">12</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">90<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Sit tall, slight lean forward at start, chest up</li>
+            <li>Pull handle to lower chest/upper stomach — elbows back</li>
+            <li>Squeeze shoulder blades together at peak contraction</li>
+            <li>Control the return — 2–3 seconds out, feel the lat stretch</li>
+            <li>Don't swing torso to generate momentum</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>Cable taken?</strong> Chest-supported dumbbell row or resistance band seated row.</p>
+      </div>
+    </div>
+
+    <!-- DUMBBELL SHOULDER PRESS -->
+    <div class="exercise-card" id="ex-d2-3">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d2-3','day2')"></div>
+        <div class="ex-name">Seated Dumbbell Shoulder Press</div>
+        <div class="ex-target">Shoulders · Triceps</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=qEwKCR5JCog" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch DB Shoulder Press Tutorial (Renaissance Periodization)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">10</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">90<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Sit upright with back supported; dumbbells at ear height</li>
+            <li>Press up and slightly together — don't lock elbows at top</li>
+            <li>Lower with control — elbows at 90° at bottom</li>
+            <li>Keep core tight; don't arch lower back to assist</li>
+            <li>If shoulders are sore, try neutral grip (palms facing in)</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>Dumbbells taken?</strong> Machine shoulder press or Smith machine overhead press.</p>
+      </div>
+    </div>
+
+    <!-- SPLIT SQUAT -->
+    <div class="exercise-card" id="ex-d2-4">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d2-4','day2')"></div>
+        <div class="ex-name">Dumbbell Split Squat</div>
+        <div class="ex-target">Quads · Glutes · Stability</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=U4s4mEQ5VLo" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch Split Squat Tutorial (Jeff Nippard)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">10ea</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">90<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Place rear foot on bench or step — hold dumbbells at sides</li>
+            <li>Front foot out far enough so knee stays behind toe at bottom</li>
+            <li>Lower straight down — don't push hips forward</li>
+            <li>Front knee tracks over second/third toe</li>
+            <li>Drive up through front heel to stand</li>
+            <li>Keep torso upright throughout</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>Balance issues?</strong> Do regular split squat (both feet on floor) or leg press instead.</p>
+      </div>
+    </div>
+
+    <!-- DEAD BUG -->
+    <div class="exercise-card" id="ex-d2-5">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d2-5','day2')"></div>
+        <div class="ex-name">Dead Bug</div>
+        <div class="ex-target">Deep Core · Anti-Rotation</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=4XLEnwUr1d8" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch Dead Bug Tutorial (Athlean-X)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">8ea</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">60<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Lie on back; arms extended up, knees at 90° in the air</li>
+            <li>Press lower back INTO the floor — maintain throughout</li>
+            <li>Slowly lower opposite arm and leg toward floor simultaneously</li>
+            <li>Stop before lower back lifts; return and switch sides</li>
+            <li>Breathe out as you lower, inhale as you return</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>Too hard?</strong> Do just arm or just leg alternating before combining both.</p>
+      </div>
+    </div>
+
+    <button class="btn btn-success" onclick="completeWorkout('day2')">✓ Mark Day 2 Complete</button>
+  </div>
+</div>
+
+<!-- ====== DAY 3 ====== -->
+<div class="page" id="page-day3">
+  <div class="section">
+    <div class="section-title">
+      <small>Friday / Session C</small>
+      DAY 3 — FULL BODY C
+    </div>
+    <div class="sticky-quicknav"><div class="quicknav-row" id="quicknav-day3"></div></div>
+    <div class="day-progress" id="progress-day3">
+      <div class="day-progress-top">
+        <div class="day-progress-label">Session progress</div>
+        <div class="day-progress-value"><span id="progress-text-day3">0 / 0</span><span class="save-badge" id="save-badge-day3"></span></div>
+      </div>
+      <div class="day-progress-bar"><div class="day-progress-fill" id="progress-fill-day3"></div></div>
+    </div>
+<p style="color:var(--muted);font-size:13px;margin-bottom:20px;">Duration: 55–65 min · Focus: Step-up, chest-supported row, arms, calves, core</p>
+    <button class="btn btn-ghost" onclick="resetDay('day3')">↺ Reset Checkboxes</button>
+    <div class="complete-banner" id="banner-day3"><h3>💪 Session Complete!</h3><p>Rest, recover, and sleep 8 hours.</p></div>
+
+    <!-- LEG PRESS -->
+    <div class="exercise-card" id="ex-d3-1">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d3-1','day3')"></div>
+        <div class="ex-name">Leg Press</div>
+        <div class="ex-target">Quads · Glutes · Hamstrings</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=IZxyjW7MPJQ" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch Leg Press Tutorial (Jeff Nippard)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">12</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">90<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Feet shoulder-width, mid-platform — not too high, not too low</li>
+            <li>Lower until knees are at 90° — don't let back peel off seat</li>
+            <li>Press through the entire foot — don't just push with toes</li>
+            <li>Keep knees tracking in line with toes throughout</li>
+            <li>Don't lock knees at top — keep slight tension</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>Machine taken?</strong> Goblet squat or bodyweight squat with resistance band.</p>
+      </div>
+    </div>
+
+    <!-- CHEST SUPPORTED ROW -->
+    <div class="exercise-card" id="ex-d3-2">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d3-2','day3')"></div>
+        <div class="ex-name">Chest-Supported Dumbbell Row</div>
+        <div class="ex-target">Mid Back · Rear Delts · Biceps</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=oDe0LCWHoqM" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch Chest-Supported Row Tutorial (Jeff Nippard)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">12</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">90<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Set bench to 45° incline; lie face down with chest on pad</li>
+            <li>Let arms hang — this is your start position (full stretch)</li>
+            <li>Row both dumbbells up and back — elbows track behind shoulders</li>
+            <li>Squeeze shoulder blades together hard at top</li>
+            <li>Lower slowly — feel the full stretch at bottom</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>No incline bench?</strong> Cable face pull or single-arm dumbbell row on flat bench.</p>
+      </div>
+    </div>
+
+    <!-- CABLE LATERAL RAISE -->
+    <div class="exercise-card" id="ex-d3-3">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d3-3','day3')"></div>
+        <div class="ex-name">Cable / Dumbbell Lateral Raise</div>
+        <div class="ex-target">Side Delts · Shoulder Width</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=3VcKaXpzqRo" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch Lateral Raise Tutorial (Jeff Nippard)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">15</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">60<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Light weight — this is isolation work</li>
+            <li>Slight forward lean from hips (about 10°)</li>
+            <li>Raise arms to just below shoulder height — lead with elbow</li>
+            <li>Think: pouring a jug at the top — thumb side slightly down</li>
+            <li>Lower with control — 3 seconds down</li>
+            <li>Don't shrug — keep traps relaxed</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>No cable?</strong> Dumbbell lateral raise works equally well at lighter loads.</p>
+      </div>
+    </div>
+
+    <!-- BICEPS CURL -->
+    <div class="exercise-card" id="ex-d3-4">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d3-4','day3')"></div>
+        <div class="ex-name">Dumbbell Biceps Curl</div>
+        <div class="ex-target">Biceps</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=ykJmrZ5v0Oo" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch Biceps Curl Tutorial (Scott Herman)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">12</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">60<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Stand upright; elbows pinned to sides throughout</li>
+            <li>Curl up with supination (rotate wrists outward as you lift)</li>
+            <li>Squeeze bicep at top — fully flexed</li>
+            <li>Lower slowly — 3 seconds — resist the weight</li>
+            <li>Don't swing torso — if you have to, the weight is too heavy</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>No dumbbells?</strong> Cable curl or EZ bar curl.</p>
+      </div>
+    </div>
+
+    <!-- TRICEPS PUSHDOWN -->
+    <div class="exercise-card" id="ex-d3-5">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d3-5','day3')"></div>
+        <div class="ex-name">Cable Triceps Pushdown</div>
+        <div class="ex-target">Triceps</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=2-LAMcpzODU" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch Triceps Pushdown Tutorial (Jeff Nippard)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">3</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">15</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">60<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Stand tall, slight forward lean, elbows tucked at sides</li>
+            <li>Push rope/bar down until arms fully extend</li>
+            <li>Squeeze triceps hard at bottom</li>
+            <li>Control the return — only forearms move, not upper arms</li>
+            <li>Keep core braced — don't use momentum</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>No cable?</strong> Overhead dumbbell triceps extension or close-grip push-up.</p>
+      </div>
+    </div>
+
+    <!-- CALF RAISES -->
+    <div class="exercise-card" id="ex-d3-6">
+      <div class="ex-header">
+        <div class="ex-checkbox" onclick="toggleEx(this,'d3-6','day3')"></div>
+        <div class="ex-name">Standing Calf Raise</div>
+        <div class="ex-target">Calves · Gastrocnemius</div>
+      </div>
+      <a href="https://www.youtube.com/watch?v=gwLzBJYoWlI" target="_blank" class="ex-video-link">
+        <div class="play-icon">▶</div>Watch Calf Raise Tutorial (Athlean-X)
+      </a>
+      <div class="ex-body">
+        <div class="ex-stats">
+          <div class="stat-box"><span class="stat-label">Sets</span><span class="stat-value">4</span></div>
+          <div class="stat-box"><span class="stat-label">Reps</span><span class="stat-value">15</span></div>
+          <div class="stat-box"><span class="stat-label">Rest</span><span class="stat-value">60<span class="stat-unit">s</span></span></div>
+        </div>
+        <div class="ex-cues">
+          <h4>Form Cues</h4>
+          <ul>
+            <li>Use calf raise machine or stand on edge of step</li>
+            <li>Lower heel fully — get a full stretch at the bottom</li>
+            <li>Rise up onto balls of feet — hold 1 second at top</li>
+            <li>Don't bounce — full range each rep</li>
+            <li>Slow the descent — calves respond to slow, full-range reps</li>
+          </ul>
+        </div>
+        <p class="sub-note"><strong>No machine?</strong> Use a step and bodyweight, or hold dumbbells at sides.</p>
+      </div>
+    </div>
+
+    <button class="btn btn-success" onclick="completeWorkout('day3')">✓ Mark Day 3 Complete</button>
+  </div>
+</div>
+
+<!-- ====== DAY 4 ====== -->
+<div class="page" id="page-day4">
+  <div class="section">
+    <span class="optional-badge">Optional Day 4</span>
+    <div class="section-title">
+      <small>Saturday / Arms + Shoulders + Conditioning</small>
+      DAY 4 — PUMP & CONDITION
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Only add this if you're recovering well. If tired or sore — skip it and use this as an active recovery day instead.</p>
+
+    <div class="info-card" style="margin-bottom:16px;">
+      <h3>Option A: Arms + Shoulders (40 min)</h3>
+      <ul>
+        <li>Incline DB Curl — 3×12 → <a href="https://www.youtube.com/watch?v=soxrZlIl35U" target="_blank" style="color:var(--accent3);">Watch Tutorial ▶</a></li>
+        <li>Hammer Curl — 3×12 → <a href="https://www.youtube.com/watch?v=zC3nLlEvin4" target="_blank" style="color:var(--accent3);">Watch Tutorial ▶</a></li>
+        <li>Skull Crusher (EZ bar / DB) — 3×12 → <a href="https://www.youtube.com/watch?v=d_KZxkY_0cM" target="_blank" style="color:var(--accent3);">Watch Tutorial ▶</a></li>
+        <li>Overhead DB Extension — 3×12 → <a href="https://www.youtube.com/watch?v=_gsUck-7M74" target="_blank" style="color:var(--accent3);">Watch Tutorial ▶</a></li>
+        <li>DB Lateral Raise — 3×15 (see Day 3)</li>
+        <li>Face Pull (cable/band) — 3×15 → <a href="https://www.youtube.com/watch?v=rep-qVOkidI" target="_blank" style="color:var(--accent3);">Watch Tutorial ▶</a></li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>Option B: Active Recovery Day</h3>
+      <ul>
+        <li>20–30 min walk outdoors</li>
+        <li>10 min foam rolling: quads, lats, calves, upper back</li>
+        <li>Hip flexor stretch — 60 sec each side</li>
+        <li>Child's pose — 60 sec</li>
+        <li>Doorway chest stretch — 30 sec each arm</li>
+        <li>Cat-cow — 10 slow reps</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PROGRESS ====== -->
+<div class="page" id="page-progress">
+  <div class="section">
+    <div class="section-title">
+      <small>8-Week Model</small>
+      PROGRESSION
+    </div>
+
+    <div class="info-card" style="margin-bottom:16px;">
+      <h3>The Golden Rule</h3>
+      <p>Complete all prescribed reps with good form before adding weight. <strong style="color:var(--accent);">Never sacrifice form for weight.</strong> At 40+, tendons and joints adapt slower than muscles — be patient and progressive.</p>
+    </div>
+
+    <div class="info-card">
+      <h3>The +2 Rep / +Weight Rule</h3>
+      <p style="margin-bottom:10px;">Each week, try to either:</p>
+      <ul>
+        <li>Add 1–2 extra reps to at least one set, OR</li>
+        <li>Once you can do <em>all sets at the top of the rep range</em>, add the smallest weight increment available</li>
+        <li>For dumbbells: jump from 12.5kg to 15kg when ready</li>
+        <li>For machines: move up one plate/peg</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>8-Week Roadmap</h3>
+      <table class="prog-table">
+        <tr><th>Weeks</th><th>Focus & Goal</th></tr>
+        <tr><td><span class="week-badge">1–2</span></td><td>Learn form. Go lighter than you think you need. Focus on feeling the right muscles. Every rep should be controlled.</td></tr>
+        <tr><td><span class="week-badge">3–4</span></td><td>Find your true working weights. By end of Week 4, sets should feel like 7–8/10 difficulty on last rep.</td></tr>
+        <tr><td><span class="week-badge">5–6</span></td><td>Add weight or reps. You should be stronger than Week 1. Track weights used in notes app or notebook.</td></tr>
+        <tr><td><span class="week-badge">7–8</span></td><td>Push harder. Final week should feel challenging. After Week 8, take a deload (lighter week) before starting again.</td></tr>
+      </table>
+    </div>
+
+    <div class="info-card">
+      <h3>Deload Week (After Week 8)</h3>
+      <ul>
+        <li>Keep the same exercises</li>
+        <li>Reduce weight by 30–40%</li>
+        <li>Reduce sets to 2 per exercise</li>
+        <li>This lets joints, tendons, and nervous system recover before the next 8 weeks</li>
+        <li>Don't skip deloads — they are why men over 40 stay injury-free</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ====== FUEL ====== -->
+<div class="page" id="page-fuel">
+  <div class="section">
+    <div class="section-title">
+      <small>Recovery & Nutrition</small>
+      FUEL & REST
+    </div>
+
+    <div class="macro-row">
+      <div class="macro-box"><div class="macro-val">2g</div><div class="macro-label">Protein / kg BW</div></div>
+      <div class="macro-box"><div class="macro-val">8h</div><div class="macro-label">Sleep Target</div></div>
+      <div class="macro-box"><div class="macro-val">3L</div><div class="macro-label">Water Daily</div></div>
+    </div>
+
+    <div class="info-card">
+      <h3>🥩 Protein — The Most Important Rule</h3>
+      <ul>
+        <li>Target: <strong style="color:var(--accent);">1.8–2g of protein per kg of bodyweight</strong> daily</li>
+        <li>Example: 85kg man = ~160–170g protein per day</li>
+        <li>Best sources: Chicken breast, eggs, Greek yogurt, tuna, cottage cheese, beef, salmon</li>
+        <li>Whey protein shake is helpful but not mandatory</li>
+        <li>Spread protein across 4 meals — your body uses protein better this way</li>
+        <li>Without enough protein, muscle growth stalls no matter how hard you train</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>😴 Sleep — Your Actual Growth Time</h3>
+      <ul>
+        <li>You don't grow in the gym — you grow while you sleep</li>
+        <li>7–9 hours is the target range; 8 is ideal</li>
+        <li>Testosterone drops sharply with under 6 hours — critical for men over 40</li>
+        <li>Prioritise consistent sleep time (same bedtime, same wake time)</li>
+        <li>Dark room, cool temperature, no screens 30 min before bed</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>💧 Hydration</h3>
+      <ul>
+        <li>Aim for 2.5–3 litres of water per day</li>
+        <li>Drink 500ml before you go to the gym</li>
+        <li>Sip during training — don't chug large amounts at once</li>
+        <li>Urine should be pale yellow — dark yellow = dehydrated</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>🥗 Eating Strategy (Keep It Simple)</h3>
+      <ul>
+        <li><strong style="color:var(--accent);">To build muscle:</strong> eat at or slightly above maintenance (200–300 kcal surplus)</li>
+        <li>Don't overeat — excess fat gain slows your progress and motivation</li>
+        <li>Fill half your plate with protein + vegetables</li>
+        <li>Fill the rest with complex carbs (rice, oats, sweet potato, bread)</li>
+        <li>Don't fear carbs — they fuel your workouts</li>
+        <li>Eat within 1–2 hours after training for best recovery</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <h3>Supplement Priority List</h3>
+      <ul>
+        <li><strong style="color:var(--accent);">1. Creatine Monohydrate</strong> — 3–5g daily, backed by decades of research, safe and effective for muscle and strength</li>
+        <li><strong style="color:var(--accent);">2. Whey Protein</strong> — only if you can't hit protein targets from food</li>
+        <li><strong style="color:var(--accent);">3. Vitamin D3 + K2</strong> — important for men over 40, supports testosterone and bone health</li>
+        <li>Everything else is secondary. Don't buy fat burners, test boosters, or expensive pre-workouts.</li>
+      </ul>
+    </div>
+
+    <div class="safety-box">
+      <h3>Men Over 40 — Special Notes</h3>
+      <ul>
+        <li>Recovery takes longer than your 20s — this is normal, not a limitation</li>
+        <li>Don't train through sharp joint pain — get it assessed</li>
+        <li>Consider getting testosterone and Vitamin D levels checked annually</li>
+        <li>Stress management matters — high cortisol (stress hormone) actively fights muscle growth</li>
+        <li>Consistency over intensity: showing up 3 days a week for 12 months beats 6 days for 6 weeks every time</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  const STORAGE_KEY = 'forgeWorkoutPlanV2';
+  const DEFAULT_STATE = { activePage: 'overview', exercises: {}, notes: {}, loads: {}, timerSeconds: 0 };
+  let appState = loadState();
+  let timerInterval = null;
+  let timerRemaining = appState.timerSeconds || 0;
+  const APP_PAGES = ['overview', 'schedule', 'day1', 'day2', 'day3', 'day4', 'progress', 'fuel'];
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? { ...DEFAULT_STATE, ...JSON.parse(raw) } : { ...DEFAULT_STATE };
+    } catch (e) {
+      return { ...DEFAULT_STATE };
+    }
+  }
+
+  function saveState(showBadgeForDay) {
+    appState.timerSeconds = timerRemaining;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    if (showBadgeForDay) {
+      const el = document.getElementById('save-badge-' + showBadgeForDay);
+      if (el) {
+        el.textContent = 'Saved';
+        clearTimeout(el._t);
+        el._t = setTimeout(() => el.textContent = '', 1200);
+      }
+    }
+  }
+
+  function setActiveTabButton(id) {
+    document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
+    const target = [...document.querySelectorAll('.nav-tab')].find(btn => btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${id}'`));
+    if (target) target.classList.add('active');
+  }
+
+  function showPage(id, btn) {
+    const pageId = normalizePageId(id);
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    var pg = document.getElementById('page-' + pageId);
+    if (pg) pg.classList.add('active');
+    if (btn) btn.classList.add('active'); else setActiveTabButton(pageId);
+    appState.activePage = pageId;
+    saveState();
+    if (history.replaceState) history.replaceState(null, '', '#' + pageId);
+    renderQuickNavs();
+    requestAnimationFrame(scrollActiveNavTabIntoView);
+    window.scrollTo(0, 0);
+  }
+
+  function getExerciseState(exId) {
+    return appState.exercises[exId] || { checked: false };
+  }
+
+  function setExerciseState(exId, checked) {
+    appState.exercises[exId] = { checked };
+  }
+
+  function toggleEx(el, exId, dayId) {
+    el.classList.toggle('checked');
+    el.textContent = el.classList.contains('checked') ? '✓' : '';
+    const card = el.closest('.exercise-card');
+    card.classList.toggle('done', el.classList.contains('checked'));
+    setExerciseState(exId, el.classList.contains('checked'));
+    saveState(dayId);
+    updateDayProgress(dayId);
+  }
+
+  function updateDayProgress(dayId) {
+    const page = document.getElementById('page-' + dayId);
+    if (!page) return;
+    const boxes = page.querySelectorAll('.ex-checkbox');
+    const checked = page.querySelectorAll('.ex-checkbox.checked');
+    const banner = document.getElementById('banner-' + dayId);
+    const fill = document.getElementById('progress-fill-' + dayId);
+    const text = document.getElementById('progress-text-' + dayId);
+    const total = boxes.length;
+    const done = checked.length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    if (fill) fill.style.width = pct + '%';
+    if (text) text.textContent = `${done} / ${total} complete`;
+    if (banner && total > 0 && done === total) {
+      banner.classList.add('show');
+    } else if (banner) {
+      banner.classList.remove('show');
+    }
+    renderQuickNavs();
+  }
+
+  function resetDay(dayId) {
+    const page = document.getElementById('page-' + dayId);
+    if (!page) return;
+    page.querySelectorAll('.exercise-card').forEach(card => {
+      const exId = card.dataset.exerciseId;
+      const checkbox = card.querySelector('.ex-checkbox');
+      if (checkbox) {
+        checkbox.classList.remove('checked');
+        checkbox.textContent = '';
+      }
+      card.classList.remove('done');
+      if (exId) {
+        setExerciseState(exId, false);
+      }
+    });
+    const banner = document.getElementById('banner-' + dayId);
+    if (banner) banner.classList.remove('show');
+    saveState(dayId);
+    updateDayProgress(dayId);
+  }
+
+  function completeWorkout(dayId) {
+    const page = document.getElementById('page-' + dayId);
+    if (!page) return;
+    page.querySelectorAll('.exercise-card').forEach(card => {
+      const checkbox = card.querySelector('.ex-checkbox');
+      const exId = card.dataset.exerciseId;
+      if (checkbox) {
+        checkbox.classList.add('checked');
+        checkbox.textContent = '✓';
+      }
+      card.classList.add('done');
+      if (exId) setExerciseState(exId, true);
+    });
+    const banner = document.getElementById('banner-' + dayId);
+    if (banner) {
+      banner.classList.add('show');
+      setTimeout(() => banner.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+    }
+    saveState(dayId);
+    updateDayProgress(dayId);
+  }
+
+  function startRestTimer(seconds) {
+    timerRemaining = seconds;
+    renderTimer();
+    document.getElementById('timer-dock').classList.add('show');
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      timerRemaining -= 1;
+      renderTimer();
+      saveState();
+      if (timerRemaining <= 0) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerRemaining = 0;
+        renderTimer();
+        if (navigator.vibrate) navigator.vibrate([200,100,200]);
+        try {
+          const audio = new Audio('data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTAAAAAA/////wAAAP///wAAAP///wAAAP///wAA');
+          audio.play().catch(()=>{});
+        } catch(e){}
+      }
+    }, 1000);
+    saveState();
+  }
+
+  function pauseTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    } else if (timerRemaining > 0) {
+      startRestTimer(timerRemaining);
+    }
+    renderTimer();
+    saveState();
+  }
+
+  function closeTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+    timerRemaining = 0;
+    renderTimer();
+    document.getElementById('timer-dock').classList.remove('show');
+    saveState();
+  }
+
+  function renderTimer() {
+    const count = document.getElementById('timer-count');
+    const pauseBtn = document.getElementById('timer-pause');
+    if (!count) return;
+    const mins = String(Math.floor(timerRemaining / 60)).padStart(2, '0');
+    const secs = String(timerRemaining % 60).padStart(2, '0');
+    count.textContent = `${mins}:${secs}`;
+    pauseBtn.textContent = timerInterval ? 'Pause' : 'Resume';
+    if (timerRemaining > 0) {
+      document.getElementById('timer-dock').classList.add('show');
+    }
+  }
+
+  function attachExerciseEnhancements() {
+    document.querySelectorAll('.exercise-card').forEach((card, index) => {
+      const page = card.closest('.page');
+      if (!page) return;
+      const dayId = page.id.replace('page-','');
+      const exId = card.id.replace('ex-','');
+      card.dataset.exerciseId = exId;
+
+      const titleEl = card.querySelector('.ex-name');
+      const exName = titleEl ? titleEl.textContent.trim() : ('Exercise ' + (index+1));
+
+      if (!card.querySelector('.exercise-tools')) {
+        const body = card.querySelector('.ex-body');
+        const stats = card.querySelectorAll('.stat-box .stat-label');
+        let restValue = 90;
+        stats.forEach(label => {
+          if (label.textContent.trim().toLowerCase() === 'rest') {
+            const v = label.parentElement.querySelector('.stat-value');
+            const txt = v ? v.textContent : '';
+            const num = parseInt(txt, 10);
+            if (!Number.isNaN(num)) restValue = num;
+          }
+        });
+        const tools = document.createElement('div');
+        tools.className = 'exercise-tools';
+        tools.innerHTML = `
+          <div class="input-box">
+            <label>Weight used</label>
+            <input type="text" placeholder="e.g. 20kg each" data-load-input="${exId}">
+          </div>
+          <div class="input-box">
+            <label>Reps / effort</label>
+            <input type="text" placeholder="e.g. 12,12,10 @ RPE 8" data-effort-input="${exId}">
+          </div>
+          <div class="input-box full-span">
+            <label>Notes</label>
+            <textarea placeholder="How did it feel? Pain? Too easy? Increase next time?" data-note-input="${exId}"></textarea>
+          </div>
+        `;
+        body.appendChild(tools);
+
+        const restRow = document.createElement('div');
+        restRow.className = 'rest-row';
+        restRow.innerHTML = `
+          <button class="rest-btn" type="button" onclick="startRestTimer(${restValue})">Start ${restValue}s Rest</button>
+          <button class="rest-btn" type="button" onclick="startRestTimer(120)">Start 120s Rest</button>
+        `;
+        body.appendChild(restRow);
+
+        const mini = document.createElement('div');
+        mini.className = 'mini-note';
+        mini.textContent = 'Tip: save the exact load and reps you used so next week you know whether to add reps or weight.';
+        body.appendChild(mini);
+      }
+
+      const checkbox = card.querySelector('.ex-checkbox');
+      const state = getExerciseState(exId);
+      if (checkbox && state.checked) {
+        checkbox.classList.add('checked');
+        checkbox.textContent = '✓';
+        card.classList.add('done');
+      }
+
+      const loadInput = card.querySelector(`[data-load-input="${exId}"]`);
+      const effortInput = card.querySelector(`[data-effort-input="${exId}"]`);
+      const noteInput = card.querySelector(`[data-note-input="${exId}"]`);
+
+      if (loadInput) {
+        loadInput.value = appState.loads[exId]?.weight || '';
+        loadInput.addEventListener('input', e => {
+          appState.loads[exId] = { ...(appState.loads[exId] || {}), weight: e.target.value, effort: effortInput ? effortInput.value : '' };
+          saveState(dayId);
+          updateLoadBadge(card, exId);
+        });
+      }
+      if (effortInput) {
+        effortInput.value = appState.loads[exId]?.effort || '';
+        effortInput.addEventListener('input', e => {
+          appState.loads[exId] = { ...(appState.loads[exId] || {}), weight: loadInput ? loadInput.value : '', effort: e.target.value };
+          saveState(dayId);
+        });
+      }
+      if (noteInput) {
+        noteInput.value = appState.notes[exId] || '';
+        noteInput.addEventListener('input', e => {
+          appState.notes[exId] = e.target.value;
+          saveState(dayId);
+        });
+      }
+
+      updateLoadBadge(card, exId);
+    });
+  }
+
+  function updateLoadBadge(card, exId) {
+    const statValue = card.querySelector('.stat-box .stat-value');
+    if (!statValue) return;
+    let badge = card.querySelector('.load-entry');
+    const val = appState.loads[exId]?.weight || '';
+    if (val) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'load-entry';
+        statValue.parentElement.appendChild(badge);
+      }
+      badge.textContent = 'Last: ' + val;
+    } else if (badge) {
+      badge.remove();
+    }
+  }
+
+  function renderQuickNavs() {
+    ['day1','day2','day3'].forEach(dayId => {
+      const row = document.getElementById('quicknav-' + dayId);
+      const page = document.getElementById('page-' + dayId);
+      if (!row || !page) return;
+      const cards = [...page.querySelectorAll('.exercise-card')];
+      row.innerHTML = '';
+      cards.forEach((card, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'quicknav-btn';
+        if (card.querySelector('.ex-checkbox.checked')) btn.classList.add('active');
+        btn.textContent = (i+1) + '. ' + card.querySelector('.ex-name').textContent.split('(')[0].trim();
+        btn.onclick = () => card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        row.appendChild(btn);
+      });
+    });
+  }
+
+  function registerServiceWorker() {
+    if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
+    }, { once: true });
+  }
+  function exportWorkoutData() {
+    const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const d = new Date();
+    a.href = url;
+    a.download = `forge-workout-progress-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function importWorkoutData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json,.json';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        appState = { ...DEFAULT_STATE, ...parsed };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        location.reload();
+      } catch (err) {
+        alert('That file is not a valid progress backup.');
+      }
+    };
+    input.click();
+  }
+
+  function clearAllWorkoutData() {
+    const ok = confirm('Reset all saved checkmarks, weights, notes, and timer data?');
+    if (!ok) return;
+    localStorage.removeItem(STORAGE_KEY);
+    appState = { ...DEFAULT_STATE };
+    location.reload();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    attachExerciseEnhancements();
+    registerServiceWorker();
+    window.addEventListener('hashchange', () => showPage((location.hash || '').replace('#', '')));
+
+    ['day1','day2','day3'].forEach(updateDayProgress);
+
+    const timerDock = document.createElement('div');
+    timerDock.className = 'timer-dock';
+    timerDock.id = 'timer-dock';
+    timerDock.innerHTML = `
+      <div class="timer-top">
+        <div>
+          <div class="timer-title">Rest timer</div>
+          <div class="timer-count" id="timer-count">00:00</div>
+        </div>
+      </div>
+      <div class="timer-actions">
+        <button class="timer-btn primary" id="timer-pause" onclick="pauseTimer()">Pause</button>
+        <button class="timer-btn ghost" onclick="closeTimer()">Close</button>
+      </div>
+    `;
+    document.body.appendChild(timerDock);
+    renderTimer();
+    if (timerRemaining > 0) {
+      document.getElementById('timer-dock').classList.add('show');
+    }
+
+    const targetPage = (location.hash || '').replace('#','') || appState.activePage || 'overview';
+    showPage(targetPage);
+
+    if (timerRemaining > 0 && !timerInterval) {
+      // keep visible but don't auto resume silently
+      renderTimer();
+    }
+  });
+</script>
+
+
+<script>
+  window.normalizePageId = function normalizePageId(id) {
+    return APP_PAGES.includes(id) ? id : DEFAULT_STATE.activePage;
+  };
+
+  window.scrollActiveNavTabIntoView = function scrollActiveNavTabIntoView() {
+    const activeTab = document.querySelector('.nav-tab.active');
+    if (!activeTab || typeof activeTab.scrollIntoView !== 'function') return;
+    activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  };
+</script>
+
+</body>
+</html>
