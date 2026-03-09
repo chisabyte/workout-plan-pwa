@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'forge-workout-plan-v1';
+const CACHE_NAME = 'forge-workout-plan-v1';
 const APP_SHELL = [
   './',
   './index.html',
@@ -7,7 +7,6 @@ const APP_SHELL = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
-  './.nojekyll'
 ];
 
 self.addEventListener('install', event => {
